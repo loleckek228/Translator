@@ -6,8 +6,6 @@ import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.widget.Toast
-import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.translator.R
 import com.example.translator.domain.usesCases.MainInteractor
@@ -17,14 +15,10 @@ import com.example.translator.presentation.ui.adapter.MainAdapter
 import com.example.translator.presentation.ui.fragments.SearchDialogFragment
 import com.example.translator.presentation.viewmodel.MainViewModel
 import com.example.translator.utils.network.isNetworkAvailable
-import dagger.android.AndroidInjection
 import kotlinx.android.synthetic.main.activity_main.*
-import javax.inject.Inject
+import org.koin.android.viewmodel.ext.android.viewModel
 
 class MainActivity : BaseActivity<AppState, MainInteractor>() {
-
-    @Inject
-    internal lateinit var viewModelFactory: ViewModelProvider.Factory
 
     override lateinit var model: MainViewModel
     private val adapter: MainAdapter by lazy { MainAdapter(onListItemClickListener) }
@@ -34,12 +28,14 @@ class MainActivity : BaseActivity<AppState, MainInteractor>() {
             searchDialogFragment.setOnSearchClickListener(onSearchClickListener)
             searchDialogFragment.show(supportFragmentManager, BOTTOM_SHEET_FRAGMENT_DIALOG_TAG)
         }
+
     private val onListItemClickListener: MainAdapter.OnListItemClickListener =
         object : MainAdapter.OnListItemClickListener {
             override fun onItemClick(data: DataModel) {
                 Toast.makeText(this@MainActivity, data.text, Toast.LENGTH_SHORT).show()
             }
         }
+
     private val onSearchClickListener: SearchDialogFragment.OnSearchClickListener =
         object : SearchDialogFragment.OnSearchClickListener {
             override fun onClick(searchWord: String) {
@@ -53,21 +49,24 @@ class MainActivity : BaseActivity<AppState, MainInteractor>() {
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        AndroidInjection.inject(this)
-
         super.onCreate(savedInstanceState)
+
         setContentView(R.layout.activity_main)
 
-        model = viewModelFactory.create(MainViewModel::class.java)
-        model.subscribe().observe(this@MainActivity, Observer<AppState> { renderData(it) })
+        val viewModel: MainViewModel by viewModel()
+
+        model = viewModel
+        model.subscribe().observe(this@MainActivity, { renderData(it) })
 
         search_fab.setOnClickListener(fabClickListener)
+
         main_activity_recyclerview.layoutManager = LinearLayoutManager(applicationContext)
         main_activity_recyclerview.adapter = adapter
     }
 
     override fun renderData(appState: AppState) {
         when (appState) {
+
             is AppState.Success -> {
                 showViewWorking()
                 val data = appState.data
@@ -80,6 +79,7 @@ class MainActivity : BaseActivity<AppState, MainInteractor>() {
                     adapter.setData(data)
                 }
             }
+
             is AppState.Loading -> {
                 showViewLoading()
                 if (appState.progress != null) {
@@ -91,6 +91,7 @@ class MainActivity : BaseActivity<AppState, MainInteractor>() {
                     progress_bar_round.visibility = VISIBLE
                 }
             }
+
             is AppState.Error -> {
                 showViewWorking()
                 showAlertDialog(getString(R.string.error_stub), appState.error.message)
