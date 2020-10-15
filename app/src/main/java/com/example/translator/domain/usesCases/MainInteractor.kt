@@ -1,19 +1,23 @@
 package com.example.translator.domain.usesCases
 
+import com.example.translator.di.NAME_LOCAL
+import com.example.translator.di.NAME_REMOTE
+import com.example.translator.model.data.AppState
 import com.example.translator.model.data.DataModel
-import com.example.translator.model.data.SearchResult
 import com.example.translator.model.repositories.Repository
 import io.reactivex.Observable
+import javax.inject.Inject
+import javax.inject.Named
 
-class MainInteractor(
-    private val remoteRepository: Repository<List<SearchResult>>,
-    private val localRepository: Repository<List<SearchResult>>
-) : Interactor<DataModel> {
-    override fun getData(word: String, fromRemoteSource: Boolean): Observable<DataModel> {
+class MainInteractor @Inject constructor(
+    @Named(NAME_REMOTE) val remoteRepository: Repository<List<DataModel>>,
+    @Named(NAME_LOCAL) val localRepository: Repository<List<DataModel>>
+) : Interactor<AppState> {
+    override fun getData(word: String, fromRemoteSource: Boolean): Observable<AppState> {
         return if (fromRemoteSource) {
-            remoteRepository.getData(word).map { DataModel.Success(it) }
+            remoteRepository
         } else {
-            localRepository.getData(word).map { DataModel.Success(it) }
-        }
+            localRepository
+        }.getData(word).map { AppState.Success(it) }
     }
 }

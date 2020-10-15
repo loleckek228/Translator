@@ -1,8 +1,8 @@
 package com.example.translator.presentation.view
 
-import com.example.translator.model.data.DataModel
+import com.example.translator.model.data.AppState
 
 interface View {
 
-    fun renderData(dataModel: DataModel)
+    fun renderData(dataModel: AppState)
 }
