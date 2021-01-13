@@ -2,125 +2,112 @@ package com.example.translator.presentation.ui.activities
 
 
 import android.os.Bundle
+import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.widget.Toast
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.translator.R
+import com.example.translator.domain.usesCases.MainInteractor
+import com.example.translator.model.data.AppState
 import com.example.translator.model.data.DataModel
-import com.example.translator.model.data.SearchResult
-import com.example.translator.presentation.presenters.MainPresenterImpl
-import com.example.translator.presentation.presenters.Presenter
 import com.example.translator.presentation.ui.adapter.MainAdapter
 import com.example.translator.presentation.ui.fragments.SearchDialogFragment
-import com.example.translator.presentation.view.View
+import com.example.translator.presentation.viewmodel.MainViewModel
+import com.example.translator.utils.network.isNetworkAvailable
+import dagger.android.AndroidInjection
 import kotlinx.android.synthetic.main.activity_main.*
+import javax.inject.Inject
 
-class MainActivity : BaseActivity<DataModel>() {
+class MainActivity : BaseActivity<AppState, MainInteractor>() {
 
-    companion object {
-        private const val BOTTOM_SHEET_FRAGMENT_DIALOG_TAG =
-            "74a54328-5d62-46bf-ab6b-cbf5fgt0-092395"
-    }
+    @Inject
+    internal lateinit var viewModelFactory: ViewModelProvider.Factory
 
-    private var adapter: MainAdapter? = null
+    override lateinit var model: MainViewModel
+    private val adapter: MainAdapter by lazy { MainAdapter(onListItemClickListener) }
+    private val fabClickListener: View.OnClickListener =
+        View.OnClickListener {
+            val searchDialogFragment = SearchDialogFragment.newInstance()
+            searchDialogFragment.setOnSearchClickListener(onSearchClickListener)
+            searchDialogFragment.show(supportFragmentManager, BOTTOM_SHEET_FRAGMENT_DIALOG_TAG)
+        }
     private val onListItemClickListener: MainAdapter.OnListItemClickListener =
         object : MainAdapter.OnListItemClickListener {
-            override fun onItemClick(data: SearchResult) {
+            override fun onItemClick(data: DataModel) {
                 Toast.makeText(this@MainActivity, data.text, Toast.LENGTH_SHORT).show()
+            }
+        }
+    private val onSearchClickListener: SearchDialogFragment.OnSearchClickListener =
+        object : SearchDialogFragment.OnSearchClickListener {
+            override fun onClick(searchWord: String) {
+                isNetworkAvailable = isNetworkAvailable(applicationContext)
+                if (isNetworkAvailable) {
+                    model.getData(searchWord, isNetworkAvailable)
+                } else {
+                    showNoInternetConnectionDialog()
+                }
             }
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        AndroidInjection.inject(this)
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        setOnSearchFabClick()
+        model = viewModelFactory.create(MainViewModel::class.java)
+        model.subscribe().observe(this@MainActivity, Observer<AppState> { renderData(it) })
+
+        search_fab.setOnClickListener(fabClickListener)
+        main_activity_recyclerview.layoutManager = LinearLayoutManager(applicationContext)
+        main_activity_recyclerview.adapter = adapter
     }
 
-    private fun setOnSearchFabClick() {
-        search_fab.setOnClickListener {
-            val searchDialogFragment = SearchDialogFragment.newInstance()
-            searchDialogFragment.setOnSearchClickListener(object :
-                SearchDialogFragment.OnSearchClickListener {
-                override fun onClick(searchWord: String) {
-                    presenter.getData(searchWord, true)
-                }
-            })
-
-            searchDialogFragment.show(supportFragmentManager, BOTTOM_SHEET_FRAGMENT_DIALOG_TAG)
-        }
-    }
-
-    override fun createPresenter(): Presenter<DataModel, View> = MainPresenterImpl()
-
-    override fun renderData(dataModel: DataModel) {
-        when (dataModel) {
-            is DataModel.Success -> {
-                val searchResult = dataModel.data
-
-                if (searchResult == null || searchResult.isEmpty()) {
-                    showErrorScreen(getString(R.string.empty_server_response_on_success))
+    override fun renderData(appState: AppState) {
+        when (appState) {
+            is AppState.Success -> {
+                showViewWorking()
+                val data = appState.data
+                if (data.isNullOrEmpty()) {
+                    showAlertDialog(
+                        getString(R.string.dialog_tittle_sorry),
+                        getString(R.string.empty_server_response_on_success)
+                    )
                 } else {
-                    showViewSuccess()
-
-                    if (adapter == null) {
-                        with(main_activity_recyclerview) {
-                            layoutManager = LinearLayoutManager(applicationContext)
-                            adapter = MainAdapter(onListItemClickListener, searchResult)
-                        }
-                    } else {
-                        adapter!!.setData(searchResult)
-                    }
+                    adapter.setData(data)
                 }
             }
-
-            is DataModel.Loading -> {
+            is AppState.Loading -> {
                 showViewLoading()
-
-                dataModel.progress?.let {
-                    with(progress_bar_horizontal) {
-                        visibility = VISIBLE
-                        progress_bar_round.visibility = GONE
-                        progress = dataModel.progress!!
-                    }
-                }?.let {
+                if (appState.progress != null) {
+                    progress_bar_horizontal.visibility = VISIBLE
+                    progress_bar_round.visibility = GONE
+                    progress_bar_horizontal.progress = appState.progress
+                } else {
                     progress_bar_horizontal.visibility = GONE
                     progress_bar_round.visibility = VISIBLE
                 }
             }
-
-            is DataModel.Error -> {
-                showErrorScreen(dataModel.error.message)
+            is AppState.Error -> {
+                showViewWorking()
+                showAlertDialog(getString(R.string.error_stub), appState.error.message)
             }
         }
     }
 
-    private fun showErrorScreen(error: String?) {
-        showViewError()
-
-        error_textview.text = error ?: getString(R.string.undefined_error)
-
-        reload_button.setOnClickListener {
-            presenter.getData("hi", true)
-        }
-    }
-
-    private fun showViewSuccess() {
-        success_linear_layout.visibility = VISIBLE
+    private fun showViewWorking() {
         loading_frame_layout.visibility = GONE
-        error_linear_layout.visibility = GONE
     }
 
     private fun showViewLoading() {
-        success_linear_layout.visibility = GONE
         loading_frame_layout.visibility = VISIBLE
-        error_linear_layout.visibility = GONE
     }
 
-    private fun showViewError() {
-        success_linear_layout.visibility = GONE
-        loading_frame_layout.visibility = GONE
-        error_linear_layout.visibility = VISIBLE
+    companion object {
+        private const val BOTTOM_SHEET_FRAGMENT_DIALOG_TAG =
+            "74a54328-5d62-46bf-ab6b-cbf5fgt0-092395"
     }
 }

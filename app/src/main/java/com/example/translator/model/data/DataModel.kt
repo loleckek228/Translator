@@ -1,7 +1,8 @@
 package com.example.translator.model.data
 
-sealed class DataModel {
-    data class Success(val data: List<SearchResult>?) : DataModel()
-    data class Error(val error: Throwable) : DataModel()
-    data class Loading(val progress: Int?) : DataModel()
-}
+import com.google.gson.annotations.SerializedName
+
+class DataModel(
+    @field:SerializedName("text") val text: String?,
+    @field:SerializedName("meanings") val meanings: List<Meanings>?
+)
