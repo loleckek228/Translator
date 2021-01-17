@@ -1,37 +1,37 @@
 package com.example.translator.model.dataSource.remote
 
 import com.example.translator.model.data.DataModel
-import com.example.translator.model.dataSource.DataSource
+import com.example.translator.model.dataSource.DataSourceRemote
 import com.jakewharton.retrofit2.adapter.kotlin.coroutines.CoroutineCallAdapterFactory
-import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.converter.moshi.MoshiConverterFactory
 
-class RetrofitImplementation : DataSource<List<DataModel>> {
-
+class RetrofitImplementation : DataSourceRemote {
     override suspend fun getData(word: String): List<DataModel> {
-        return getService(BaseInterceptor.interceptor).searchAsync(word).await()
+        return getService().searchAsync(word).await()
     }
 
-    private fun getService(interceptor: Interceptor): ApiService {
-        return createRetrofit(interceptor).create(ApiService::class.java)
+    private fun getService(): ApiService {
+        return createRetrofit().create(ApiService::class.java)
     }
 
-    private fun createRetrofit(interceptor: Interceptor): Retrofit {
+    private fun createRetrofit(): Retrofit {
         return Retrofit.Builder()
             .baseUrl(BASE_URL_LOCATIONS)
-            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(MoshiConverterFactory.create())
             .addCallAdapterFactory(CoroutineCallAdapterFactory())
-            .client(createOkHttpClient(interceptor))
+            .client(createOkHttpClient())
             .build()
     }
 
-    private fun createOkHttpClient(interceptor: Interceptor): OkHttpClient {
+    private fun createOkHttpClient(): OkHttpClient {
+//        val userName = "username"
+//        val password = "********"
         val httpClient = OkHttpClient.Builder()
-        httpClient.addInterceptor(interceptor)
-        httpClient.addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
+            .addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
+//            .addInterceptor(AuthInterceptor(username, password)) Если нужна авторизация
         return httpClient.build()
     }
 

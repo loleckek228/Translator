@@ -8,31 +8,31 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class MainViewModel(private val interactor: MainInteractor) :
+class SearchOnlineViewModel(private val interactor: MainInteractor) :
     BaseViewModel<AppState>() {
-
-    private var liveDataForViewToObserve: LiveData<AppState> = _mutableLiveData
+    private var liveDataForViewToObserve: LiveData<AppState> = mutableLiveData
 
     fun subscribe(): LiveData<AppState> = liveDataForViewToObserve
 
-    override fun getData(word: String, isOnline: Boolean) {
-        _mutableLiveData.value = AppState.Loading(null)
+    override fun getData(word: String) {
+        mutableLiveData.value = AppState.Loading(null)
         cancelJob()
 
-        viewModelCouroutineScope.launch { startInteractor(word, isOnline) }
+        viewModelCouroutineScope.launch { startGetData(word) }
     }
 
-    private suspend fun startInteractor(word: String, isOnline: Boolean) =
+    private suspend fun startGetData(word: String) =
         withContext(Dispatchers.IO) {
-            _mutableLiveData.postValue(parseSearchResults(interactor.getData(word, isOnline)))
+            mutableLiveData.postValue(parseSearchResults(interactor.getData(word)))
         }
 
+
     override fun handleError(error: Throwable) {
-        _mutableLiveData.postValue(AppState.Error(error))
+        mutableLiveData.postValue(AppState.Error(error))
     }
 
     override fun onCleared() {
-        _mutableLiveData.value = AppState.Success(null)
+        mutableLiveData.value = AppState.Success(null)
         super.onCleared()
     }
 }

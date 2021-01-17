@@ -20,12 +20,12 @@
         style="@style/BaseTextStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/margin_medium"
-        tools:text="Description: Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." />
+        android:layout_marginStart="@dimen/margin_medium" />
 
     <View xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="@dimen/hairline"
         android:layout_marginTop="@dimen/margin_small"
         android:background="@color/color_gray" />
+
 </LinearLayout>

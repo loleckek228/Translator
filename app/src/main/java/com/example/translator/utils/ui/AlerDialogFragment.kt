@@ -7,12 +7,12 @@ import androidx.appcompat.app.AppCompatDialogFragment
 class AlertDialogFragment : AppCompatDialogFragment() {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        var alertDialog = getStubAlertDialog(context!!)
+        var alertDialog = getStubAlertDialog(requireContext())
         arguments?.let {
             val title = it.getString(TITLE_EXTRA)
             val message = it.getString(MESSAGE_EXTRA)
 
-            alertDialog = getAlertDialog(context!!, title, message)
+            alertDialog = getAlertDialog(requireContext(), title, message)
         }
 
         return alertDialog
@@ -20,8 +20,10 @@ class AlertDialogFragment : AppCompatDialogFragment() {
 
     companion object {
 
-        private const val TITLE_EXTRA = "89cbce59-e28f-418f-b470-ff67125c2e2f"
-        private const val MESSAGE_EXTRA = "0dd00b66-91c2-447d-b627-530065040905"
+        private const val TITLE_EXTRA =
+            "com.example.translator.utils.ui.AlertDialogFragment.TITLE_EXTRA"
+        private const val MESSAGE_EXTRA =
+            "com.example.translator.utils.ui.AlertDialogFragment.MESSAGE_EXTRA"
 
         fun newInstance(title: String?, message: String?): AlertDialogFragment {
             val dialogFragment = AlertDialogFragment()

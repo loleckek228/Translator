@@ -1,8 +1,8 @@
 package com.example.translator.model.data
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
 
 class DataModel(
-    @field:SerializedName("text") val text: String?,
-    @field:SerializedName("meanings") val meanings: List<Meanings>?
+    @field:Json(name = "text") val word: String?,
+    @field:Json(name = "meanings") val meanings: List<Meanings>?
 )

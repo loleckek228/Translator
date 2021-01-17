@@ -15,4 +15,6 @@
         internet connection.
     </string>
     <string name="dialog_tittle_sorry">Sorry</string>
+    <string name="history_title">History</string>
+    <string name="search_offline_title">Search Offline</string>
 </resources>

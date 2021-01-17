@@ -1,8 +1,8 @@
 package com.example.translator.model.data
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
 
 class Meanings(
-    @field:SerializedName("translation") val translation: Translation?,
-    @field:SerializedName("imageUrl") val imageUrl: String?
+    @field:Json(name = "translation") val translation: Translation?,
+    @field:Json(name = "imageUrl") val imageUrl: String?
 )

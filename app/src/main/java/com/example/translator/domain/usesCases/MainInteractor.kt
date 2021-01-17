@@ -1,20 +1,20 @@
 package com.example.translator.domain.usesCases
 
 import com.example.translator.model.data.AppState
-import com.example.translator.model.data.DataModel
-import com.example.translator.model.repositories.Repository
+import com.example.translator.model.dataSource.local.HistoryEntity
+import com.example.translator.model.repositories.IMainRepository
 
 class MainInteractor(
-    private val repositoryRemote: Repository<List<DataModel>>,
-    private val repositoryLocal: Repository<List<DataModel>>
-) : Interactor<AppState> {
-    override suspend fun getData(word: String, fromRemoteSource: Boolean): AppState {
+    private val repository: IMainRepository
+) : IMainInteractor {
+    override suspend fun getData(word: String): AppState {
         return AppState.Success(
-            if (fromRemoteSource) {
-                repositoryRemote
-            } else {
-                repositoryLocal
-            }.getData(word)
+            repository.getRemoteData(word)
         )
     }
+
+    override suspend fun getDataOffline(word: String): HistoryEntity {
+        return repository.getLocalData(word)
+    }
+
 }
